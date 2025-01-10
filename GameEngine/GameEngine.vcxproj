@@ -142,16 +142,6 @@
     <None Include="Shaders\sun_vertex_shader.glsl" />
     <None Include="Shaders\vertex_shader.glsl" />
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="Resources\Textures\dirt.bmp" />
-    <Image Include="Resources\Textures\rock.bmp" />
-    <Image Include="Resources\Textures\wood.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="Resources\Models\sphere.obj">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </Object>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
