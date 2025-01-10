@@ -1,13 +1,3 @@
-﻿  camera.cpp
-  window.cpp
-  main.cpp
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(90,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  meshLoaderObj.cpp
-  mesh.cpp
-  shader.cpp
-  texture.cpp
-  Generating Code...
-LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
-LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
-glew32s.lib(glew.obj) : warning LNK4099: PDB '' was not found with 'glew32s.lib(glew.obj)' or at ''; linking object as if no debug info
+﻿  main.cpp
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(121,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
   GameEngine.vcxproj -> C:\Users\crist\Desktop\Lost-in-Venice-3D\Debug\GameEngine.exe
