@@ -1,3 +1,4 @@
-﻿  main.cpp
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(224,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  GameEngine.vcxproj -> C:\Users\crist\Desktop\Lost-in-Venice-3D\Debug\GameEngine.exe
+﻿LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
+LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
+main.obj : error LNK2019: unresolved external symbol "public: void __thiscall Camera::rotateOx(float)" (?rotateOx@Camera@@QAEXM@Z) referenced in function "void __cdecl processKeyboardInput(void)" (?processKeyboardInput@@YAXXZ)
+C:\Users\gabri\source\repos\Lost-in-Venice-3D\Debug\GameEngine.exe : fatal error LNK1120: 1 unresolved externals
