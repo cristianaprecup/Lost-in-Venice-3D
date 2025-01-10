@@ -6,7 +6,7 @@
 #include "Model Loading\meshLoaderObj.h"
 
 #define STB_IMAGE_IMPLEMENTATION 
-#include "C:/Users/gabri/source/repos/Lost-in-Venice-3D/Dependencies/stb/stb_image.h"
+#include "../Dependencies/stb/stb_image.h"
 
 void processKeyboardInput();
 
@@ -180,13 +180,40 @@ int main()
 	textures3[0].id = tex3;
 	textures3[0].type = "texture_diffuse";
 
+	std::vector<Texture> textures4;
+	textures4.push_back(Texture());
+	textures4[0].id = tex4;
+	textures4[0].type = "texture_diffuse";
+
+	std::vector<Texture> textureDirt;
+	textureDirt.push_back(Texture());
+	textureDirt[0].id = dirtTexture;
+	textureDirt[0].type = "texture_diffuse";
+
+	std::vector<Texture> textureBoat;
+	textureBoat.push_back(Texture());
+	textureBoat[0].id = boatTexture;
+	textureBoat[0].type = "texture_diffuse";
+
 
 	Mesh mesh(vert, ind, textures3);
 
 	MeshLoaderObj loader;
 	Mesh sun = loader.loadObj("Resources/Models/sphere.obj");
 	Mesh box = loader.loadObj("Resources/Models/cube.obj", textures);
-	Mesh plane = loader.loadObj("Resources/Models/plane.obj", textures3);
+	Mesh plane = loader.loadObj("Resources/Models/plane.obj", textureDirt);
+	Mesh tree = loader.loadObj("Resources/Models/Tree.obj", textures2);
+	Mesh watchtowe = loader.loadObj("Resources/Models/watchtower.obj", textures4);
+	Mesh wood = loader.loadObj("Resources/Models/Wood.obj", textures4);
+	Mesh woodHouse = loader.loadObj("Resources/Models/woodHouse.obj", textures4);
+	Mesh house2 = loader.loadObj("Resources/Models/house2.obj", textures4);
+	Mesh house3 = loader.loadObj("Resources/Models/house3.obj", textures4);
+	Mesh house4 = loader.loadObj("Resources/Models/house4.obj", textures4);
+	Mesh house5 = loader.loadObj("Resources/Models/house5.obj", textures4);
+	Mesh bridge = loader.loadObj("Resources/Models/bridge.obj", textures2);
+	Mesh plane2 = loader.loadObj("Resources/Models/plane.obj", textureDirt);
+	Mesh woodHouse2 = loader.loadObj("Resources/Models/woodHouse.obj", textures4);
+	Mesh boat = loader.loadObj("Resources/Models/boat.obj", textureBoat);
 
 	
 
@@ -245,6 +272,14 @@ int main()
 		glUniform3f(glGetUniformLocation(shader.getId(), "viewPos"), camera.getCameraPosition().x, camera.getCameraPosition().y, camera.getCameraPosition().z);
 
 		box.draw(shader);
+
+		ModelMatrix = glm::mat4(1.0);
+		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-10.0f, -20.0f, 0.0f));
+		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.8f, 0.8f, 0.8f));
+		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+		plane.draw(shader);
 
 		ModelMatrix = glm::mat4(1.0);
 		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(40.0f, -20.0f, 20.0f)); 
