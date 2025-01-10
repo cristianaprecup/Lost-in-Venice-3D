@@ -65,6 +65,8 @@
     <None Include="Shaders\fragment_shader.glsl" />
     <None Include="Shaders\sun_fragment_shader.glsl" />
     <None Include="Shaders\sun_vertex_shader.glsl" />
+    <None Include="Shaders\skybox_vertex.glsl" />
+    <None Include="Shaders\skybox_fragment.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\Textures\wood.bmp">
