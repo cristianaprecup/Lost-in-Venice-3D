@@ -1,3 +1,8 @@
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+#include "GLEW/glew.h"
+#include "GLFW\include\glfw3.h"
 #include "Graphics\window.h"
 #include "Camera\camera.h"
 #include "Shaders\shader.h"
@@ -10,6 +15,17 @@
 
 #define STB_IMAGE_IMPLEMENTATION 
 #include "../Dependencies/stb/stb_image.h"
+
+// ----------------- for gui -----------------
+enum GameState {
+	START_SCREEN,
+	GAME_RUNNING,
+	GAME_PAUSED,
+	GAME_OVER
+};
+GameState gameState = START_SCREEN;
+
+// ----------------- for gui -----------------
 
 void processKeyboardInput();
 
@@ -95,14 +111,57 @@ void initGame() {
 //-----------------
 
 
+GLuint LoadTextureFromFile(const char* filename) {
+	int width, height, channels;
+	unsigned char* data = stbi_load(filename, &width, &height, &channels, 4);
+	if (!data) {
+		std::cerr << "Failed to load texture: " << filename << std::endl;
+		return 0;
+	}
+
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	stbi_image_free(data);
+
+	return textureID;
+}
+
+GLuint backgroundTexture = LoadTextureFromFile("path/to/your/background/image.png");
+
 
 int main()
 {
+
+	//--------------------IMGUI--------------------
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+	ImGui::StyleColorsDark();
+
+	ImGui_ImplGlfw_InitForOpenGL(window.getWindow(), true);
+	ImGui_ImplOpenGL3_Init("#version 330");
+
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.FrameRounding = 10.0f;
+	style.Colors[ImGuiCol_Button] = ImVec4(0.4f, 0.2f, 0.1f, 1.0f);
+	style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.5f, 0.3f, 0.2f, 1.0f);
+	style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.3f, 0.1f, 0.0f, 1.0f);
+
+	io.FontGlobalScale = 1.5f; 
+
+	//---------------------------------------------
+
 	glClearColor(0.2f, 0.8f, 1.0f, 1.0f);
 
 	initGame();
 
 	float skyboxVertices[] = {
+
 
 		-1.0f,  1.0f, -1.0f,
 		-1.0f, -1.0f, -1.0f,
@@ -173,6 +232,7 @@ int main()
 	GLuint mapTexture = loadBMP("Resources/Textures/map.bmp");
 	//----------
 
+	GLuint backgroundTexture = loadBMP("Resources/Textures/background.bmp");
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -266,9 +326,12 @@ int main()
 		glfwWindowShouldClose(window.getWindow()) == 0)
 	{
 		window.clear();
-		float currentFrame = glfwGetTime();
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
+		
+		if (gameState == GAME_RUNNING) {
+			float currentFrame = glfwGetTime();
+			deltaTime = currentFrame - lastFrame;
+			lastFrame = currentFrame;
+		}
 
 		processKeyboardInput();
 
@@ -281,50 +344,95 @@ int main()
 		GLuint projectionLoc = glGetUniformLocation(skyboxShader.getId(), "projection");
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
 
-		glBindVertexArray(skyboxVAO);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glBindVertexArray(0);
-		glDepthFunc(GL_LESS);
+		ImVec2 buttonSize = ImVec2(io.DisplaySize.x * 0.2f, io.DisplaySize.y * 0.1f);
+		float centerX = (io.DisplaySize.x - buttonSize.x) / 2.0f;
+		float centerY = (io.DisplaySize.y - buttonSize.y * 2 - 20) / 2.0f;
+
+		if (gameState == START_SCREEN) { // sart page
+			ImGui::SetNextWindowPos(ImVec2(0, 0));
+			ImGui::SetNextWindowSize(io.DisplaySize);
+			ImGui::Begin("##Background", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoScrollbar);
+			ImGui::Image((ImTextureID)(uintptr_t)backgroundTexture, io.DisplaySize);
+			ImGui::End();
+			ImGui::SetCursorPos(ImVec2(centerX, centerY));
+			if (ImGui::Button("Start Game", buttonSize)) {
+				gameState = GAME_RUNNING;
+			}
+			ImGui::SetCursorPos(ImVec2(centerX, centerY + buttonSize.y + 100));
+			if (ImGui::Button("Exit", buttonSize)) {
+				glfwSetWindowShouldClose(window.getWindow(), true);
+			}
+		}
+		else if (gameState == GAME_OVER) { // game over 
+			ImGui::Begin("Game Over");
+			ImGui::Text("Game Over! Better luck next time.");
+			if (ImGui::Button("Restart")) {
+				gameState = START_SCREEN;
+			}
+			if (ImGui::Button("Exit")) {
+				glfwSetWindowShouldClose(window.getWindow(), true);
+			}
+			ImGui::End();
+		}
+
+		if (gameState == GAME_RUNNING) {
+			// aici se intampla chestii in joc, daca se pune in afara o sa fie si in pagina de start sau pause
+			glDepthFunc(GL_LEQUAL);
+			skyboxShader.use();
+			glm::mat4 view = glm::mat4(glm::mat3(camera.getViewMatrix())); // Remove translation from the view matrix
+			glm::mat4 projection = glm::perspective(glm::radians(90.0f), (float)window.getWidth() / (float)window.getHeight(), 0.1f, 100.0f);
+			GLuint viewLoc = glGetUniformLocation(skyboxShader.getId(), "view");
+			GLuint projectionLoc = glGetUniformLocation(skyboxShader.getId(), "projection");
+			glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+			glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
+
+			glBindVertexArray(skyboxVAO);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+			glBindVertexArray(0);
+			glDepthFunc(GL_LESS);
 
 	
 		sunShader.use();
 		glm::mat4 ProjectionMatrix = glm::perspective(90.0f, window.getWidth() * 1.0f / window.getHeight(), 0.1f, 10000.0f);
 		glm::mat4 ViewMatrix = glm::lookAt(camera.getCameraPosition(), camera.getCameraPosition() + camera.getCameraViewDirection(), camera.getCameraUp());
 
-		GLuint MatrixID = glGetUniformLocation(sunShader.getId(), "MVP");
+			GLuint MatrixID = glGetUniformLocation(sunShader.getId(), "MVP");
 
-		glm::mat4 ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, lightPos);
-		glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+			glm::mat4 ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, lightPos);
+			glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
-		sun.draw(sunShader);
+			sun.draw(sunShader);
 
-		shader.use();
+			shader.use();
 
-		GLuint MatrixID2 = glGetUniformLocation(shader.getId(), "MVP");
-		GLuint ModelMatrixID = glGetUniformLocation(shader.getId(), "model");
+			GLuint MatrixID2 = glGetUniformLocation(shader.getId(), "MVP");
+			GLuint ModelMatrixID = glGetUniformLocation(shader.getId(), "model");
 
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		glUniform3f(glGetUniformLocation(shader.getId(), "lightColor"), lightColor.x, lightColor.y, lightColor.z);
-		glUniform3f(glGetUniformLocation(shader.getId(), "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-		glUniform3f(glGetUniformLocation(shader.getId(), "viewPos"), camera.getCameraPosition().x, camera.getCameraPosition().y, camera.getCameraPosition().z);
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			glUniform3f(glGetUniformLocation(shader.getId(), "lightColor"), lightColor.x, lightColor.y, lightColor.z);
+			glUniform3f(glGetUniformLocation(shader.getId(), "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+			glUniform3f(glGetUniformLocation(shader.getId(), "viewPos"), camera.getCameraPosition().x, camera.getCameraPosition().y, camera.getCameraPosition().z);
 
-		box.draw(shader);
+			box.draw(shader);
 
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-10.0f, -20.0f, 0.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.8f, 0.8f, 0.8f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		plane.draw(shader);
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-10.0f, -20.0f, 0.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.8f, 0.8f, 0.8f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			plane.draw(shader);
 
 		ModelMatrix = glm::mat4(1.0);
 		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(40.0f, -20.0f, 20.0f));
@@ -358,21 +466,21 @@ int main()
 		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 		house2.draw(shader);
 
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(0.0f, -18.0f, -60.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.05f, 0.05f, 0.05f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		house2.draw(shader);
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(0.0f, -18.0f, -60.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.05f, 0.05f, 0.05f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			house2.draw(shader);
 
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(30.0f, -18.0f, -60.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.05f, 0.05f, 0.05f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		house2.draw(shader);
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(30.0f, -18.0f, -60.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.05f, 0.05f, 0.05f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			house2.draw(shader);
 
 		ModelMatrix = glm::mat4(1.0);
 		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(0.0f, -18.0f, -40.0f));
@@ -382,53 +490,53 @@ int main()
 		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 		house3.draw(shader);
 
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-20.0f, -15.0f, -20.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.12f, 0.12f, 0.12f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		house4.draw(shader);
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-20.0f, -15.0f, -20.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.12f, 0.12f, 0.12f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			house4.draw(shader);
 
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-70.0f, -20.0f, 30.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.3f, 0.3f, 0.3f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		house5.draw(shader);
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-70.0f, -20.0f, 30.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.3f, 0.3f, 0.3f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			house5.draw(shader);
 
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-50.0f, -20.0f, 70.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		bridge.draw(shader);
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-50.0f, -20.0f, 70.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			bridge.draw(shader);
 
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-50.0f, -20.0f, 115.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.3f, 0.3f, 0.3f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		plane.draw(shader);
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-50.0f, -20.0f, 115.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.3f, 0.3f, 0.3f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);	
+			plane.draw(shader);
 
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-60.0f, -20.0f, 120.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(7.0f, 12.5f, 8.0f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		woodHouse.draw(shader);
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-60.0f, -20.0f, 120.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(7.0f, 12.5f, 8.0f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			woodHouse.draw(shader);
 
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-35.0f, -20.0f, 125.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(5.0f, 5.0f, 5.0f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		tree.draw(shader);
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-35.0f, -20.0f, 125.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(5.0f, 5.0f, 5.0f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			tree.draw(shader);
 
 		ModelMatrix = glm::mat4(1.0);
 		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-15.0f, -20.0f, 125.0f));
@@ -450,34 +558,104 @@ int main()
 		map.draw(shader);
 		//-----------
 
+
+			//if (/* game over condition */ false) {
+			//	gameState = GAME_OVER;
+			//} implementem dupa ce stim cum pierdem
+
+		}
+		// pauza:
+		else if (gameState == GAME_PAUSED) {
+			ImVec2 windowSize = io.DisplaySize;
+			float centerX = (windowSize.x - buttonSize.x) / 2.0f;
+			float centerY = (windowSize.y - buttonSize.y * 3 - 40) / 2.0f;
+
+			ImGui::SetNextWindowPos(ImVec2(0, 0));
+			ImGui::SetNextWindowSize(io.DisplaySize);
+			ImGui::Begin("##Background", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoScrollbar);
+
+			if (backgroundTexture != 0) {
+				ImGui::Image((ImTextureID)(uintptr_t)backgroundTexture, io.DisplaySize);
+			}
+			else {
+				ImGui::Text("Failed to load background texture.");
+			}
+
+			ImGui::End();
+
+			ImGui::SetCursorPos(ImVec2((windowSize.x - ImGui::CalcTextSize("Paused").x) / 2, centerY - 100));
+			ImGui::Text("Paused");
+
+			ImGui::SetCursorPos(ImVec2(centerX, centerY));
+			if (ImGui::Button("Resume", buttonSize)) {
+				gameState = GAME_RUNNING;
+			}
+
+			ImGui::SetCursorPos(ImVec2(centerX, centerY + buttonSize.y + 20));
+			if (ImGui::Button("Exit to Main Menu", buttonSize)) {
+				gameState = START_SCREEN;
+			}
+
+			ImGui::SetCursorPos(ImVec2(centerX, centerY + 2 * (buttonSize.y + 20)));
+			if (ImGui::Button("Exit Game", buttonSize)) {
+				glfwSetWindowShouldClose(window.getWindow(), true);
+			}
+		}
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 		window.update();
 
 	}
+
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 }
 
-void processKeyboardInput()
-{
-	float cameraSpeed = 20.0f * deltaTime;
-	float rotationSpeed = glm::radians(90.0f * deltaTime * 20);
 
-	if (window.isPressed(GLFW_KEY_W))
-		camera.keyboardMoveFront(cameraSpeed);
-	if (window.isPressed(GLFW_KEY_S))
-		camera.keyboardMoveBack(cameraSpeed);
-	if (window.isPressed(GLFW_KEY_A))
-		camera.keyboardMoveLeft(cameraSpeed);
-	if (window.isPressed(GLFW_KEY_D))
-		camera.keyboardMoveRight(cameraSpeed);
+void processKeyboardInput() {
+	static bool escPressed = false;
 
-	if (window.isPressed(GLFW_KEY_R))
-		camera.keyboardMoveUp(cameraSpeed);
-	if (window.isPressed(GLFW_KEY_F))
-		camera.keyboardMoveDown(cameraSpeed);
+	if (window.isPressed(GLFW_KEY_ESCAPE)) {
+		if (!escPressed) {
+			escPressed = true;
+			if (gameState == GAME_RUNNING) {
+				gameState = GAME_PAUSED;
+			}
+			else if (gameState == GAME_PAUSED) {
+				gameState = GAME_RUNNING;
+			}
+		}
+	}
+	else {
+		escPressed = false;
+	}
+
+	if (gameState == GAME_RUNNING) {
+		float cameraSpeed = 20.0f * deltaTime;
+		float rotationSpeed = glm::radians(90.0f * deltaTime * 20);
+
+		if (window.isPressed(GLFW_KEY_W))
+			camera.keyboardMoveFront(cameraSpeed);
+		if (window.isPressed(GLFW_KEY_S))
+			camera.keyboardMoveBack(cameraSpeed);
+		if (window.isPressed(GLFW_KEY_A))
+			camera.keyboardMoveLeft(cameraSpeed);
+		if (window.isPressed(GLFW_KEY_D))
+			camera.keyboardMoveRight(cameraSpeed);
+
+		if (window.isPressed(GLFW_KEY_R))
+			camera.keyboardMoveUp(cameraSpeed);
+		if (window.isPressed(GLFW_KEY_F))
+			camera.keyboardMoveDown(cameraSpeed);
 
 	if (window.isPressed(GLFW_KEY_LEFT))
 		camera.rotateOy(rotationSpeed);
 	if (window.isPressed(GLFW_KEY_RIGHT))
 		camera.rotateOy(-rotationSpeed);
+}
 }
 
 
