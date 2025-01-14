@@ -90,3 +90,7 @@ glm::vec3 Camera::getCameraUp()
 {
     return cameraUp;
 }
+glm::vec3 Camera::getArmsOffset()
+{
+    return glm::vec3(0.0f, -2.0f, -5.0f); // Default offset
+}

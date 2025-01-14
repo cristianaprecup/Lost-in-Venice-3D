@@ -13,6 +13,8 @@
 #include <random>
 //--------
 
+#include <chrono>
+#include <iostream>
 #define STB_IMAGE_IMPLEMENTATION 
 #include "../Dependencies/stb/stb_image.h"
 
@@ -27,10 +29,20 @@ GameState gameState = START_SCREEN;
 
 // ----------------- for gui -----------------
 
-void processKeyboardInput();
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+float rotationAngle = 0.5f;
+ 
+std::chrono::time_point<std::chrono::high_resolution_clock> previousTime = std::chrono::high_resolution_clock::now();
+
+// Function to calculate the elapsed time since the last frame
+float getDeltaTime() {
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float> elapsedTime = currentTime - previousTime;
+	previousTime = currentTime;
+	return elapsedTime.count();
+}
 
 Window window("Game Engine", 800, 800);
 Camera camera;
@@ -131,6 +143,8 @@ GLuint LoadTextureFromFile(const char* filename) {
 }
 
 GLuint backgroundTexture = LoadTextureFromFile("path/to/your/background/image.png");
+
+void processKeyboardInput();
 
 
 int main()
@@ -233,6 +247,7 @@ int main()
 	//----------
 
 	GLuint backgroundTexture = loadBMP("Resources/Textures/background.bmp");
+	GLuint skin = loadBMP("Resources/Textures/skin.bmp");
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -298,6 +313,10 @@ int main()
 	textureMap[0].type = "texture_diffuse";
 	//----------
 
+	std::vector<Texture> textureskin;
+	textureskin.push_back(Texture());
+	textureskin[0].id = skin;
+	textureskin[0].type = "texture_diffuse";
 
 	Mesh mesh(vert, ind, textures3);
 
@@ -318,6 +337,12 @@ int main()
 	Mesh plane2 = loader.loadObj("Resources/Models/plane.obj", textureDirt);
 	Mesh woodHouse2 = loader.loadObj("Resources/Models/woodHouse.obj", textures4);
 	Mesh boat = loader.loadObj("Resources/Models/boat.obj", textureBoat);
+	Mesh arms = loader.loadObj("Resources/Models/arms.obj", textureskin);
+	Mesh key = loader.loadObj("Resources/Models/key.obj", textures3);
+	Mesh dulap = loader.loadObj("Resources/Models/dulap.obj", textures4);
+	Mesh bens = loader.loadObj("Resources/Models/bens.obj", textures3);
+
+	
 	//--------------------
 	Mesh map = loader.loadObj("Resources/Models/map.obj", textureMap);
 	//-------------------
@@ -558,6 +583,60 @@ int main()
 		map.draw(shader);
 		//-----------
 
+		//arms 
+
+		ModelMatrix = glm::mat4(1.0f);
+		glm::vec3 armsOffset = glm::vec3(0.0f, -2.0f, 0.0f); // Adjust as needed
+		glm::vec3 cameraPos = camera.getCameraPosition();
+		glm::vec3 cameraViewDir = camera.getCameraViewDirection();
+		glm::vec3 cameraUp = camera.getCameraUp();
+		glm::vec3 armsPos = cameraPos + cameraViewDir * 0.5f + armsOffset;
+		ModelMatrix = glm::translate(glm::mat4(1.0f), armsPos);
+		glm::vec3 forward = glm::normalize(cameraViewDir);
+		glm::vec3 right = glm::normalize(glm::cross(forward, cameraUp));
+		glm::vec3 up = glm::normalize(glm::cross(right, forward));
+		glm::mat4 rotationMatrix = glm::mat4(
+		glm::vec4(right, 0.0f),
+		glm::vec4(up, 0.0f),
+		glm::vec4(-forward, 0.0f),
+		glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
+		);
+
+		ModelMatrix *= rotationMatrix;
+		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+		arms.draw(shader);
+		
+		//key
+
+		ModelMatrix = glm::mat4(1.0);
+	
+		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(18.0f, -10.0f, 30.0f));
+		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.2f, 0.2f, 0.2f));
+		ModelMatrix = glm::rotate(ModelMatrix, 50.0f * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+
+		key.draw(shader);
+
+		//dulap
+		ModelMatrix = glm::mat4(1.0f);
+		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-14.0f, -18.0f, -70.0f));
+		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(5.0f, 5.0f, 9.0f));
+		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+		dulap.draw(shader);
+
+		ModelMatrix = glm::mat4(1.0f);
+		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-14.0f, -11.0f, -68.0f));
+		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.8f, 0.8f, 0.8f));
+		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+		bens.draw(shader);
 
 			//if (/* game over condition */ false) {
 			//	gameState = GAME_OVER;
@@ -605,8 +684,7 @@ int main()
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-		window.update();
-
+           window.update();
 	}
 
 	ImGui_ImplOpenGL3_Shutdown();
