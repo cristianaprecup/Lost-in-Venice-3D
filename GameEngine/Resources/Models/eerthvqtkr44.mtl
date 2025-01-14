@@ -1,0 +1,42 @@
+# File produced by Open Asset Import Library (http://www.assimp.sf.net)
+# (assimp v4.1.0)
+
+newmtl FrontColor
+Kd 1 1 1
+Ka 0 0 0
+Ks 0.3300000131130219 0.3300000131130219 0.3300000131130219
+Ke 0 0 0
+d 1
+Ns 20
+illum 2
+
+newmtl Groundcover_Gravel_1inch
+Kd 0.3490196168422699 0.2666666805744171 0.2156862765550613
+Ka 0 0 0
+Ks 0.3300000131130219 0.3300000131130219 0.3300000131130219
+Ke 0 0 0
+d 1
+Ns 20
+illum 2
+map_Kd ..\..\..\Desktop\sign\Groundcover_Gravel_1inch.jpg
+
+newmtl Groundcover_Sand_Raked
+Kd 0.5490196347236633 0.5254902243614197 0.4980392158031464
+Ka 0 0 0
+Ks 0.3300000131130219 0.3300000131130219 0.3300000131130219
+Ke 0 0 0
+d 1
+Ns 20
+illum 2
+map_Kd ..\..\..\Desktop\sign\Groundcover_Sand_Raked.jpg
+
+newmtl _Groundcover_Gravel_1inch_1
+Kd 0.6509804129600525 0.501960813999176 0.2666666805744171
+Ka 0 0 0
+Ks 0.3300000131130219 0.3300000131130219 0.3300000131130219
+Ke 0 0 0
+d 1
+Ns 20
+illum 2
+map_Kd ..\..\..\Desktop\sign\_Groundcover_Gravel_1inch_1.jpg
+

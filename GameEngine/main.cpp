@@ -100,6 +100,7 @@ GLuint cubemapTexture = loadCubemap(faces);
 
 glm::vec3 mapPosition; 
 
+
 float randomFloat(float min, float max) {
 	static std::random_device rd;
 	static std::mt19937 generator(rd());
@@ -121,6 +122,8 @@ void initGame() {
 }
 
 //-----------------
+
+
 
 
 GLuint LoadTextureFromFile(const char* filename) {
@@ -145,6 +148,12 @@ GLuint LoadTextureFromFile(const char* filename) {
 GLuint backgroundTexture = LoadTextureFromFile("path/to/your/background/image.png");
 
 void processKeyboardInput();
+
+//glm::vec3 signPosition = glm::vec3(-35.0f, -20.0f, 125.0f);
+float calculateDistance(glm::vec3 from, glm::vec3 to) {
+	return glm::length(to - from);
+}
+
 
 
 int main()
@@ -173,6 +182,8 @@ int main()
 	glClearColor(0.2f, 0.8f, 1.0f, 1.0f);
 
 	initGame();
+
+	
 
 	float skyboxVertices[] = {
 
@@ -242,12 +253,10 @@ int main()
 	GLuint tex4 = loadBMP("Resources/Textures/wood.bmp");
 	GLuint dirtTexture = loadBMP("Resources/Textures/dirt.bmp");
 	GLuint boatTexture = loadBMP("Resources/Textures/boat.bmp");
-	//-----
 	GLuint mapTexture = loadBMP("Resources/Textures/map.bmp");
-	//----------
-
 	GLuint backgroundTexture = loadBMP("Resources/Textures/background.bmp");
 	GLuint skin = loadBMP("Resources/Textures/skin.bmp");
+	GLuint signTexture = loadBMP("Resources/Textures/sign.bmp");
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -306,17 +315,17 @@ int main()
 	textureBoat[0].id = boatTexture;
 	textureBoat[0].type = "texture_diffuse";
 
-	//---------
 	std::vector<Texture> textureMap;
 	textureMap.push_back(Texture());
 	textureMap[0].id = mapTexture;
 	textureMap[0].type = "texture_diffuse";
+
+	std::vector<Texture> textureSign;
+	textureSign.push_back(Texture());
+	textureSign[0].id = signTexture;
+	textureSign[0].type = "texture_diffuse";
 	//----------
 
-	std::vector<Texture> textureskin;
-	textureskin.push_back(Texture());
-	textureskin[0].id = skin;
-	textureskin[0].type = "texture_diffuse";
 
 	Mesh mesh(vert, ind, textures3);
 
@@ -337,7 +346,7 @@ int main()
 	Mesh plane2 = loader.loadObj("Resources/Models/plane.obj", textureDirt);
 	Mesh woodHouse2 = loader.loadObj("Resources/Models/woodHouse.obj", textures4);
 	Mesh boat = loader.loadObj("Resources/Models/boat.obj", textureBoat);
-	Mesh arms = loader.loadObj("Resources/Models/arms.obj", textureskin);
+	Mesh arms = loader.loadObj("Resources/Models/arms.obj", textures);
 	Mesh key = loader.loadObj("Resources/Models/key.obj", textures3);
 	Mesh dulap = loader.loadObj("Resources/Models/dulap.obj", textures4);
 	Mesh bens = loader.loadObj("Resources/Models/bens.obj", textures3);
@@ -345,7 +354,12 @@ int main()
 	
 	//--------------------
 	Mesh map = loader.loadObj("Resources/Models/map.obj", textureMap);
-	//-------------------
+	Mesh sign = loader.loadObj("Resources/Models/sign.obj", textureSign);
+
+	bool showStartMessage = true;
+	static float startTime = 0.0f; 
+	glm::vec3 signPosition = glm::vec3(-35.0f, -20.0f, 125.0f);
+	
 
 	while (!window.isPressed(GLFW_KEY_ESCAPE) &&
 		glfwWindowShouldClose(window.getWindow()) == 0)
@@ -372,6 +386,7 @@ int main()
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
 
 		ImVec2 buttonSize = ImVec2(io.DisplaySize.x * 0.2f, io.DisplaySize.y * 0.1f);
 		float centerX = (io.DisplaySize.x - buttonSize.x) / 2.0f;
@@ -406,6 +421,8 @@ int main()
 
 		if (gameState == GAME_RUNNING) {
 			// aici se intampla chestii in joc, daca se pune in afara o sa fie si in pagina de start sau pause
+
+
 			glDepthFunc(GL_LEQUAL);
 			skyboxShader.use();
 			glm::mat4 view = glm::mat4(glm::mat3(camera.getViewMatrix())); // Remove translation from the view matrix
@@ -421,7 +438,88 @@ int main()
 			glBindVertexArray(0);
 			glDepthFunc(GL_LESS);
 
-	
+			//Message from the start
+			if (showStartMessage) {
+				static float startMessageStartTime = 0.0f;
+				if (startMessageStartTime == 0.0f) {
+					startMessageStartTime = glfwGetTime();
+				}
+				float elapsedTime = glfwGetTime() - startMessageStartTime;
+				float bounceHeight = 20.0f; 
+				float bounceSpeed = 3.0f;
+				float offsetY = abs(sin(elapsedTime * bounceSpeed)) * bounceHeight;
+				ImVec2 windowSize = io.DisplaySize;
+				ImVec2 messagePos = ImVec2(windowSize.x / 2.0f, 100.0f + offsetY);
+				ImGui::SetNextWindowPos(messagePos, ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+				ImGui::Begin("StartMessage", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize);
+				ImGui::Text("Try to escape? There is a map with clues around.");
+				ImGui::End();
+
+				if (elapsedTime > 4.0f) {
+					showStartMessage = false;
+					startMessageStartTime = 0.0f;
+				}
+			}
+
+			// Message from map
+			static float mapMessageStartTime = 0.0f;
+			float distanceToMap = calculateDistance(camera.getCameraPosition(), mapPosition);
+			if (distanceToMap < 10.0f) {
+				if (mapMessageStartTime == 0.0f) {
+					mapMessageStartTime = glfwGetTime();
+				}
+				float elapsedTime = glfwGetTime() - mapMessageStartTime;
+				float bounceHeight = 20.0f; 
+				float bounceSpeed = 3.0f; 
+				float offsetY = abs(sin(elapsedTime * bounceSpeed)) * bounceHeight;
+				ImVec2 windowSize = io.DisplaySize;
+				ImVec2 messagePos = ImVec2(windowSize.x / 2.0f, 100.0f + offsetY);
+				ImGui::SetNextWindowPos(messagePos, ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+				ImGui::Begin("Message", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize);
+				ImGui::Text("Boat is your way out. Find it!");
+				ImGui::End();
+				if (elapsedTime > 10.0f) { 
+					mapMessageStartTime = glfwGetTime();
+				}
+			}
+			else {
+				mapMessageStartTime = 0.0f;
+			}
+
+			// Message from sign
+			glm::vec3 signPosition = glm::vec3(-35.0f, -20.0f, 120.0f);
+			static float signMessageStartTime = 0.0f;
+
+			float proximityThreshold = 20.0f; 
+			float distanceToSign = glm::distance(camera.getCameraPosition(), signPosition);
+			std::cout << "Distance to sign: " << distanceToSign << std::endl; 
+			bool displayMessage = distanceToSign < proximityThreshold;
+			if (displayMessage) {
+				static float signMessageStartTime = 0.0f;
+				if (signMessageStartTime == 0.0f) {
+					signMessageStartTime = glfwGetTime();
+				}
+				float elapsedTime = glfwGetTime() - signMessageStartTime;
+				float bounceHeight = 20.0f; 
+				float bounceSpeed = 3.0f; 
+				float offsetY = abs(sin(elapsedTime * bounceSpeed)) * bounceHeight;
+				ImVec2 windowSize = io.DisplaySize;
+				ImVec2 messagePos = ImVec2(windowSize.x / 2.0f, 100.0f + offsetY);
+				ImGui::SetNextWindowPos(messagePos, ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+				ImGui::Begin("Notification", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize);
+				ImGui::Text("Boat needs fuel!");
+				ImGui::End();
+				if (elapsedTime > 10.0f) {
+					signMessageStartTime = glfwGetTime();
+				}
+			}
+			else {
+				signMessageStartTime = 0.0f;
+			}
+
+
+
+
 		sunShader.use();
 		glm::mat4 ProjectionMatrix = glm::perspective(90.0f, window.getWidth() * 1.0f / window.getHeight(), 0.1f, 10000.0f);
 		glm::mat4 ViewMatrix = glm::lookAt(camera.getCameraPosition(), camera.getCameraPosition() + camera.getCameraViewDirection(), camera.getCameraUp());
@@ -563,25 +661,35 @@ int main()
 			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 			tree.draw(shader);
 
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-15.0f, -20.0f, 125.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		boat.draw(shader);
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-15.0f, -20.0f, 125.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			boat.draw(shader);
 
-		//-------------
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, mapPosition);
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.4f, 0.4f, 0.4f));
-		ModelMatrix = glm::rotate(ModelMatrix, 50.0f * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 
-		map.draw(shader);
-		//-----------
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, mapPosition);
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.4f, 0.4f, 0.4f));
+			ModelMatrix = glm::rotate(ModelMatrix, 50.0f * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			map.draw(shader);
+
+			ModelMatrix = glm::mat4(1.0f);
+			ModelMatrix = glm::translate(ModelMatrix, signPosition); // Updated translation
+			ModelMatrix = glm::rotate(ModelMatrix, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotation to face forward
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(5.0f, 5.0f, 5.0f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			sign.draw(shader);
+
+
+	
 
 		//arms 
 
