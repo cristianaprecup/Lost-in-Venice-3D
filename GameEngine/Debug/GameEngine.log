@@ -1,11 +1,11 @@
 ﻿  main.cpp
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(402,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(485,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(487,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(509,39): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(511,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(522,39): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(540,40): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(542,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(553,40): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(413,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(496,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(498,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(520,39): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(522,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(533,39): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(551,40): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(553,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(564,40): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
   GameEngine.vcxproj -> C:\Users\crist\Desktop\Lost-in-Venice-3D\Debug\GameEngine.exe

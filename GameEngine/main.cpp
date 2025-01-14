@@ -18,6 +18,17 @@
 #define STB_IMAGE_IMPLEMENTATION 
 #include "../Dependencies/stb/stb_image.h"
 
+enum ObjectiveState {
+	FIND_MAP,
+	FIND_BOAT,
+	FIND_CABINET,
+	FIND_KEY,
+	FIND_FUEL,
+	ESCAPE
+};
+ObjectiveState currentObjective = FIND_MAP;
+
+
 // ----------------- for gui -----------------
 enum GameState {
 	START_SCREEN,
@@ -701,23 +712,27 @@ int main()
 			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 			tree.draw(shader);
 
-			ModelMatrix = glm::mat4(1.0);
-			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-15.0f, -20.0f, 125.0f));
-			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
-			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-			boat.draw(shader);
+			
+			if (currentObjective >= FIND_BOAT) {
+				ModelMatrix = glm::mat4(1.0);
+				ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-15.0f, -20.0f, 125.0f));
+				ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
+				MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+				glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+				glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+				boat.draw(shader);
+			}
 
-
-			ModelMatrix = glm::mat4(1.0);
-			ModelMatrix = glm::translate(ModelMatrix, mapPosition);
-			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.4f, 0.4f, 0.4f));
-			ModelMatrix = glm::rotate(ModelMatrix, 50.0f * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-			map.draw(shader);
+			if (currentObjective >= FIND_MAP) {
+				ModelMatrix = glm::mat4(1.0);
+				ModelMatrix = glm::translate(ModelMatrix, mapPosition);
+				ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.4f, 0.4f, 0.4f));
+				ModelMatrix = glm::rotate(ModelMatrix, 50.0f * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+				MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+				glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+				glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+				map.draw(shader);
+			}
 
 			ModelMatrix = glm::mat4(1.0f);
 			ModelMatrix = glm::translate(ModelMatrix, signPosition); // Updated translation
@@ -756,35 +771,38 @@ int main()
 			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 			arms.draw(shader);
 
-			//key
+			if (currentObjective >= FIND_KEY) {
+				ModelMatrix = glm::mat4(1.0);
 
-			ModelMatrix = glm::mat4(1.0);
+				ModelMatrix = glm::translate(ModelMatrix, glm::vec3(18.0f, -10.0f, 30.0f));
+				ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.2f, 0.2f, 0.2f));
+				ModelMatrix = glm::rotate(ModelMatrix, 50.0f * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+				MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+				glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+				glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 
-			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(18.0f, -10.0f, 30.0f));
-			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.2f, 0.2f, 0.2f));
-			ModelMatrix = glm::rotate(ModelMatrix, 50.0f * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-
-			key.draw(shader);
+				key.draw(shader);
+			}
 
 			//dulap
-			ModelMatrix = glm::mat4(1.0f);
-			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-14.0f, -18.0f, -70.0f));
-			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(5.0f, 5.0f, 9.0f));
-			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-			dulap.draw(shader);
-
-			ModelMatrix = glm::mat4(1.0f);
-			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-14.0f, -11.0f, -68.0f));
-			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.8f, 0.8f, 0.8f));
-			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-			bens.draw(shader);
+			if (currentObjective >= FIND_CABINET) {
+				ModelMatrix = glm::mat4(1.0f);
+				ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-14.0f, -18.0f, -70.0f));
+				ModelMatrix = glm::scale(ModelMatrix, glm::vec3(5.0f, 5.0f, 9.0f));
+				MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+				glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+				glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+				dulap.draw(shader);
+			}
+			if (currentObjective >= FIND_FUEL) {
+				ModelMatrix = glm::mat4(1.0f);
+				ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-14.0f, -11.0f, -68.0f));
+				ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.8f, 0.8f, 0.8f));
+				MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+				glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+				glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+				bens.draw(shader);
+			}
 
 			glm::vec3 cameraPosition = camera.getCameraPosition();
 			updatePhantom(deltaTime, cameraPosition);
@@ -807,6 +825,36 @@ int main()
 				gameState = GAME_OVER;
 			}
 
+			float distanceToMap2 = calculateDistance(camera.getCameraPosition(), mapPosition);
+			if (currentObjective == FIND_MAP && distanceToMap2 < 10.0f) {
+				currentObjective = FIND_BOAT;
+			}
+
+			float distanceToBoat = calculateDistance(camera.getCameraPosition(), glm::vec3(-15.0f, -20.0f, 125.0f));
+			if (currentObjective == FIND_BOAT && distanceToBoat < 30.0f) {
+				currentObjective = FIND_CABINET;
+			}
+
+			float distanceToCabinet = calculateDistance(camera.getCameraPosition(), glm::vec3(-14.0f, -18.0f, -70.0f));
+			if (currentObjective == FIND_CABINET && distanceToCabinet < 10.0f) {
+				currentObjective = FIND_KEY;
+			}
+
+			float distanceToKey = calculateDistance(camera.getCameraPosition(), glm::vec3(18.0f, -10.0f, 30.0f));
+			if (currentObjective == FIND_KEY && distanceToKey < 10.0f) {
+				currentObjective = FIND_FUEL;
+			}
+
+			float distanceToFuel = calculateDistance(camera.getCameraPosition(), glm::vec3(-14.0f, -11.0f, -68.0f));
+			if (currentObjective == FIND_FUEL && distanceToFuel < 20.0f) {
+				currentObjective = ESCAPE;
+			}
+
+			float distanceToBoatAfterFuel = calculateDistance(camera.getCameraPosition(), glm::vec3(-15.0f, -20.0f, 125.0f));
+			if (currentObjective == ESCAPE && distanceToBoatAfterFuel < 30.0f) {
+				std::cout << "You won the game!" << std::endl;
+				gameState = GAME_OVER;
+			}
 
 		}
 		// pauza:
