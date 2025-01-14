@@ -33,7 +33,7 @@ GameState gameState = START_SCREEN;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 float rotationAngle = 0.5f;
- 
+
 std::chrono::time_point<std::chrono::high_resolution_clock> previousTime = std::chrono::high_resolution_clock::now();
 
 // Function to calculate the elapsed time since the last frame
@@ -98,7 +98,7 @@ GLuint cubemapTexture = loadCubemap(faces);
 
 //-------------
 
-glm::vec3 mapPosition; 
+glm::vec3 mapPosition;
 
 
 float randomFloat(float min, float max) {
@@ -109,9 +109,9 @@ float randomFloat(float min, float max) {
 }
 
 void initGame() {
-	float randomX = randomFloat(-50.0f, -50.0); 
-	float randomY = -17.0f;                      
-	float randomZ = randomFloat(-50.0f, 50.0f); 
+	float randomX = randomFloat(-50.0f, -50.0);
+	float randomY = -17.0f;
+	float randomZ = randomFloat(-50.0f, 50.0f);
 
 	mapPosition = glm::vec3(randomX, randomY, randomZ);
 
@@ -122,6 +122,23 @@ void initGame() {
 }
 
 //-----------------
+
+// ---------------- for ghost ----------------
+
+glm::vec3 phantomPosition = glm::vec3(0.5f, -10.0f, 0.1f);
+float phantomSpeed = 4.0f;
+float phantomRotation = 0.0f;
+
+void updatePhantom(float deltaTime, const glm::vec3& cameraPosition) {
+	if (deltaTime <= 0.0f) return;
+
+	glm::vec3 direction = cameraPosition - phantomPosition;
+
+	direction = glm::normalize(direction);
+	phantomPosition += direction * phantomSpeed * deltaTime;
+	phantomPosition.y = cameraPosition.y;
+	phantomRotation = glm::degrees(atan2(direction.z, direction.x));
+}
 
 
 
@@ -175,7 +192,7 @@ int main()
 	style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.5f, 0.3f, 0.2f, 1.0f);
 	style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.3f, 0.1f, 0.0f, 1.0f);
 
-	io.FontGlobalScale = 1.5f; 
+	io.FontGlobalScale = 1.5f;
 
 	//---------------------------------------------
 
@@ -183,7 +200,7 @@ int main()
 
 	initGame();
 
-	
+
 
 	float skyboxVertices[] = {
 
@@ -257,6 +274,8 @@ int main()
 	GLuint backgroundTexture = loadBMP("Resources/Textures/background.bmp");
 	GLuint skin = loadBMP("Resources/Textures/skin.bmp");
 	GLuint signTexture = loadBMP("Resources/Textures/sign.bmp");
+	GLuint ghostTexture = loadBMP("Resources/Textures/ghost.bmp");
+	GLuint leafTexture = loadBMP("Resources/Textures/leaf.bmp");
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -326,6 +345,18 @@ int main()
 	textureSign[0].type = "texture_diffuse";
 	//----------
 
+	//---------
+	std::vector<Texture> textureGhost;
+	textureGhost.push_back(Texture());
+	textureGhost[0].id = ghostTexture;
+	textureGhost[0].type = "texture_diffuse";
+	//----------
+
+	std::vector<Texture> textureLeaf;
+	textureLeaf.push_back(Texture());
+	textureLeaf[0].id = leafTexture;
+	textureLeaf[0].type = "texture_diffuse";
+
 
 	Mesh mesh(vert, ind, textures3);
 
@@ -334,7 +365,7 @@ int main()
 	Mesh sun = loader.loadObj("Resources/Models/sphere.obj");
 	Mesh box = loader.loadObj("Resources/Models/cube.obj", textures);
 	Mesh plane = loader.loadObj("Resources/Models/plane.obj", textureDirt);
-	Mesh tree = loader.loadObj("Resources/Models/Tree.obj", textures2);
+	Mesh tree = loader.loadObj("Resources/Models/Tree.obj", textureLeaf);
 	Mesh watchtowe = loader.loadObj("Resources/Models/watchtower.obj", textures4);
 	Mesh wood = loader.loadObj("Resources/Models/Wood.obj", textures4);
 	Mesh woodHouse = loader.loadObj("Resources/Models/woodHouse.obj", textures4);
@@ -350,22 +381,23 @@ int main()
 	Mesh key = loader.loadObj("Resources/Models/key.obj", textures3);
 	Mesh dulap = loader.loadObj("Resources/Models/dulap.obj", textures4);
 	Mesh bens = loader.loadObj("Resources/Models/bens.obj", textures3);
+	Mesh phantom = loader.loadObj("Resources/Models/ghost.obj", textureGhost);
 
-	
+
 	//--------------------
 	Mesh map = loader.loadObj("Resources/Models/map.obj", textureMap);
 	Mesh sign = loader.loadObj("Resources/Models/sign.obj", textureSign);
 
 	bool showStartMessage = true;
-	static float startTime = 0.0f; 
+	static float startTime = 0.0f;
 	glm::vec3 signPosition = glm::vec3(-35.0f, -20.0f, 125.0f);
-	
+
 
 	while (!window.isPressed(GLFW_KEY_ESCAPE) &&
 		glfwWindowShouldClose(window.getWindow()) == 0)
 	{
 		window.clear();
-		
+
 		if (gameState == GAME_RUNNING) {
 			float currentFrame = glfwGetTime();
 			deltaTime = currentFrame - lastFrame;
@@ -407,16 +439,24 @@ int main()
 				glfwSetWindowShouldClose(window.getWindow(), true);
 			}
 		}
-		else if (gameState == GAME_OVER) { // game over 
-			ImGui::Begin("Game Over");
+		else if (gameState == GAME_OVER) {
+			ImGui::SetNextWindowPos(ImVec2(0, 0));
+			ImGui::SetNextWindowSize(io.DisplaySize);
+			ImGui::Begin("##Background", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoScrollbar);
+
+			ImGui::Image((ImTextureID)(uintptr_t)backgroundTexture, io.DisplaySize);
+			ImGui::End();
+
+			ImGui::SetCursorPos(ImVec2((io.DisplaySize.x - ImGui::CalcTextSize("Game Over!").x) / 2, io.DisplaySize.y));
 			ImGui::Text("Game Over! Better luck next time.");
-			if (ImGui::Button("Restart")) {
-				gameState = START_SCREEN;
-			}
-			if (ImGui::Button("Exit")) {
+
+			ImVec2 buttonSize = ImVec2(io.DisplaySize.x * 0.2f, io.DisplaySize.y * 0.1f);
+			float centerX = (io.DisplaySize.x - buttonSize.x) / 2.0f;
+
+			ImGui::SetCursorPos(ImVec2(centerX, io.DisplaySize.y * 0.6f + buttonSize.y + 20));
+			if (ImGui::Button("Exit", buttonSize)) {
 				glfwSetWindowShouldClose(window.getWindow(), true);
 			}
-			ImGui::End();
 		}
 
 		if (gameState == GAME_RUNNING) {
@@ -445,7 +485,7 @@ int main()
 					startMessageStartTime = glfwGetTime();
 				}
 				float elapsedTime = glfwGetTime() - startMessageStartTime;
-				float bounceHeight = 20.0f; 
+				float bounceHeight = 20.0f;
 				float bounceSpeed = 3.0f;
 				float offsetY = abs(sin(elapsedTime * bounceSpeed)) * bounceHeight;
 				ImVec2 windowSize = io.DisplaySize;
@@ -469,8 +509,8 @@ int main()
 					mapMessageStartTime = glfwGetTime();
 				}
 				float elapsedTime = glfwGetTime() - mapMessageStartTime;
-				float bounceHeight = 20.0f; 
-				float bounceSpeed = 3.0f; 
+				float bounceHeight = 20.0f;
+				float bounceSpeed = 3.0f;
 				float offsetY = abs(sin(elapsedTime * bounceSpeed)) * bounceHeight;
 				ImVec2 windowSize = io.DisplaySize;
 				ImVec2 messagePos = ImVec2(windowSize.x / 2.0f, 100.0f + offsetY);
@@ -478,7 +518,7 @@ int main()
 				ImGui::Begin("Message", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize);
 				ImGui::Text("Boat is your way out. Find it!");
 				ImGui::End();
-				if (elapsedTime > 10.0f) { 
+				if (elapsedTime > 10.0f) {
 					mapMessageStartTime = glfwGetTime();
 				}
 			}
@@ -490,9 +530,9 @@ int main()
 			glm::vec3 signPosition = glm::vec3(-35.0f, -20.0f, 120.0f);
 			static float signMessageStartTime = 0.0f;
 
-			float proximityThreshold = 20.0f; 
+			float proximityThreshold = 20.0f;
 			float distanceToSign = glm::distance(camera.getCameraPosition(), signPosition);
-			std::cout << "Distance to sign: " << distanceToSign << std::endl; 
+			std::cout << "Distance to sign: " << distanceToSign << std::endl;
 			bool displayMessage = distanceToSign < proximityThreshold;
 			if (displayMessage) {
 				static float signMessageStartTime = 0.0f;
@@ -500,8 +540,8 @@ int main()
 					signMessageStartTime = glfwGetTime();
 				}
 				float elapsedTime = glfwGetTime() - signMessageStartTime;
-				float bounceHeight = 20.0f; 
-				float bounceSpeed = 3.0f; 
+				float bounceHeight = 20.0f;
+				float bounceSpeed = 3.0f;
 				float offsetY = abs(sin(elapsedTime * bounceSpeed)) * bounceHeight;
 				ImVec2 windowSize = io.DisplaySize;
 				ImVec2 messagePos = ImVec2(windowSize.x / 2.0f, 100.0f + offsetY);
@@ -520,9 +560,9 @@ int main()
 
 
 
-		sunShader.use();
-		glm::mat4 ProjectionMatrix = glm::perspective(90.0f, window.getWidth() * 1.0f / window.getHeight(), 0.1f, 10000.0f);
-		glm::mat4 ViewMatrix = glm::lookAt(camera.getCameraPosition(), camera.getCameraPosition() + camera.getCameraViewDirection(), camera.getCameraUp());
+			sunShader.use();
+			glm::mat4 ProjectionMatrix = glm::perspective(90.0f, window.getWidth() * 1.0f / window.getHeight(), 0.1f, 10000.0f);
+			glm::mat4 ViewMatrix = glm::lookAt(camera.getCameraPosition(), camera.getCameraPosition() + camera.getCameraViewDirection(), camera.getCameraUp());
 
 			GLuint MatrixID = glGetUniformLocation(sunShader.getId(), "MVP");
 
@@ -557,37 +597,37 @@ int main()
 			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 			plane.draw(shader);
 
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(40.0f, -20.0f, 20.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(5.0f, 5.0f, 5.0f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		tree.draw(shader);
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(40.0f, -20.0f, 20.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(5.0f, 5.0f, 5.0f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			tree.draw(shader);
 
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(20.0f, -25.0f, 30.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(5.0f, 5.0f, 5.0f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		watchtowe.draw(shader);
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(20.0f, -25.0f, 30.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(5.0f, 5.0f, 5.0f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			watchtowe.draw(shader);
 
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-10.0f, -20.0f, 30.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(7.0f, 12.5f, 8.0f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		woodHouse.draw(shader);
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-10.0f, -20.0f, 30.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(7.0f, 12.5f, 8.0f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			woodHouse.draw(shader);
 
-		ModelMatrix = glm::mat4(1.0f);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-50.0f, -18.0f, -60.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.05f, 0.05f, 0.05f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		house2.draw(shader);
+			ModelMatrix = glm::mat4(1.0f);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-50.0f, -18.0f, -60.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.05f, 0.05f, 0.05f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			house2.draw(shader);
 
 			ModelMatrix = glm::mat4(1.0);
 			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(0.0f, -18.0f, -60.0f));
@@ -605,13 +645,13 @@ int main()
 			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 			house2.draw(shader);
 
-		ModelMatrix = glm::mat4(1.0);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(0.0f, -18.0f, -40.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.05f, 0.05f, 0.05f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		house3.draw(shader);
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(0.0f, -18.0f, -40.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.05f, 0.05f, 0.05f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			house3.draw(shader);
 
 			ModelMatrix = glm::mat4(1.0);
 			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-20.0f, -15.0f, -20.0f));
@@ -642,7 +682,7 @@ int main()
 			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.3f, 0.3f, 0.3f));
 			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);	
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 			plane.draw(shader);
 
 			ModelMatrix = glm::mat4(1.0);
@@ -689,66 +729,84 @@ int main()
 			sign.draw(shader);
 
 
-	
 
-		//arms 
 
-		ModelMatrix = glm::mat4(1.0f);
-		glm::vec3 armsOffset = glm::vec3(0.0f, -2.0f, 0.0f); // Adjust as needed
-		glm::vec3 cameraPos = camera.getCameraPosition();
-		glm::vec3 cameraViewDir = camera.getCameraViewDirection();
-		glm::vec3 cameraUp = camera.getCameraUp();
-		glm::vec3 armsPos = cameraPos + cameraViewDir * 0.5f + armsOffset;
-		ModelMatrix = glm::translate(glm::mat4(1.0f), armsPos);
-		glm::vec3 forward = glm::normalize(cameraViewDir);
-		glm::vec3 right = glm::normalize(glm::cross(forward, cameraUp));
-		glm::vec3 up = glm::normalize(glm::cross(right, forward));
-		glm::mat4 rotationMatrix = glm::mat4(
-		glm::vec4(right, 0.0f),
-		glm::vec4(up, 0.0f),
-		glm::vec4(-forward, 0.0f),
-		glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
-		);
+			//arms 
 
-		ModelMatrix *= rotationMatrix;
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		arms.draw(shader);
-		
-		//key
+			ModelMatrix = glm::mat4(1.0f);
+			glm::vec3 armsOffset = glm::vec3(0.0f, -2.0f, 0.0f); // Adjust as needed
+			glm::vec3 cameraPos = camera.getCameraPosition();
+			glm::vec3 cameraViewDir = camera.getCameraViewDirection();
+			glm::vec3 cameraUp = camera.getCameraUp();
+			glm::vec3 armsPos = cameraPos + cameraViewDir * 0.5f + armsOffset;
+			ModelMatrix = glm::translate(glm::mat4(1.0f), armsPos);
+			glm::vec3 forward = glm::normalize(cameraViewDir);
+			glm::vec3 right = glm::normalize(glm::cross(forward, cameraUp));
+			glm::vec3 up = glm::normalize(glm::cross(right, forward));
+			glm::mat4 rotationMatrix = glm::mat4(
+				glm::vec4(right, 0.0f),
+				glm::vec4(up, 0.0f),
+				glm::vec4(-forward, 0.0f),
+				glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
+			);
 
-		ModelMatrix = glm::mat4(1.0);
-	
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(18.0f, -10.0f, 30.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.2f, 0.2f, 0.2f));
-		ModelMatrix = glm::rotate(ModelMatrix, 50.0f * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			ModelMatrix *= rotationMatrix;
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			arms.draw(shader);
 
-		key.draw(shader);
+			//key
 
-		//dulap
-		ModelMatrix = glm::mat4(1.0f);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-14.0f, -18.0f, -70.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(5.0f, 5.0f, 9.0f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		dulap.draw(shader);
+			ModelMatrix = glm::mat4(1.0);
 
-		ModelMatrix = glm::mat4(1.0f);
-		ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-14.0f, -11.0f, -68.0f));
-		ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.8f, 0.8f, 0.8f));
-		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		bens.draw(shader);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(18.0f, -10.0f, 30.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.2f, 0.2f, 0.2f));
+			ModelMatrix = glm::rotate(ModelMatrix, 50.0f * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 
-			//if (/* game over condition */ false) {
-			//	gameState = GAME_OVER;
-			//} implementem dupa ce stim cum pierdem
+			key.draw(shader);
+
+			//dulap
+			ModelMatrix = glm::mat4(1.0f);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-14.0f, -18.0f, -70.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(5.0f, 5.0f, 9.0f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			dulap.draw(shader);
+
+			ModelMatrix = glm::mat4(1.0f);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-14.0f, -11.0f, -68.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.8f, 0.8f, 0.8f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			bens.draw(shader);
+
+			glm::vec3 cameraPosition = camera.getCameraPosition();
+			updatePhantom(deltaTime, cameraPosition);
+
+			ModelMatrix = glm::mat4(1.0f);
+			ModelMatrix = glm::translate(ModelMatrix, phantomPosition);
+			ModelMatrix = glm::rotate(ModelMatrix, glm::radians(phantomRotation), glm::vec3(0.0f, 1.0f, 0.0f));
+			ModelMatrix = glm::scale(ModelMatrix, glm::vec3(5.0f, 5.0f, 5.0f));
+
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+
+			phantom.draw(shader);
+
+			//------------
+
+			if (glm::length(cameraPosition - phantomPosition) < 0.5f) {
+				gameState = GAME_OVER;
+			}
+
 
 		}
 		// pauza:
@@ -792,7 +850,7 @@ int main()
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-           window.update();
+		window.update();
 	}
 
 	ImGui_ImplOpenGL3_Shutdown();
@@ -837,11 +895,9 @@ void processKeyboardInput() {
 		if (window.isPressed(GLFW_KEY_F))
 			camera.keyboardMoveDown(cameraSpeed);
 
-	if (window.isPressed(GLFW_KEY_LEFT))
-		camera.rotateOy(rotationSpeed);
-	if (window.isPressed(GLFW_KEY_RIGHT))
-		camera.rotateOy(-rotationSpeed);
+		if (window.isPressed(GLFW_KEY_LEFT))
+			camera.rotateOy(rotationSpeed);
+		if (window.isPressed(GLFW_KEY_RIGHT))
+			camera.rotateOy(-rotationSpeed);
+	}
 }
-}
-
-

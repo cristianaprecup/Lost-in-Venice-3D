@@ -1,29 +1,11 @@
-﻿  camera.cpp
-  window.cpp
-  imgui.cpp
-  imgui_demo.cpp
-  imgui_draw.cpp
-  imgui_impl_glfw.cpp
-  imgui_impl_opengl3.cpp
-  imgui_tables.cpp
-  imgui_widgets.cpp
-  main.cpp
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(370,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(445,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(447,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(469,39): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(471,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(482,39): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(500,40): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(502,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(513,40): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-  meshLoaderObj.cpp
-  mesh.cpp
-  shader.cpp
-  texture.cpp
-  Generating Code...
-  LINK : C:\Users\crist\Desktop\Lost-in-Venice-3D\Debug\GameEngine.exe not found or not built by the last incremental link; performing full link
-LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
-LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
-glew32s.lib(glew.obj) : warning LNK4099: PDB '' was not found with 'glew32s.lib(glew.obj)' or at ''; linking object as if no debug info
+﻿  main.cpp
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(402,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(485,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(487,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(509,39): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(511,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(522,39): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(540,40): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(542,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\crist\Desktop\Lost-in-Venice-3D\GameEngine\main.cpp(553,40): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
   GameEngine.vcxproj -> C:\Users\crist\Desktop\Lost-in-Venice-3D\Debug\GameEngine.exe
