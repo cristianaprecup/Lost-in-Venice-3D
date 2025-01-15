@@ -44,7 +44,9 @@ GameState gameState = START_SCREEN;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 float rotationAngle = 0.5f;
-
+bool keyTouched = false;
+static bool bensTouched = false;
+ 
 std::chrono::time_point<std::chrono::high_resolution_clock> previousTime = std::chrono::high_resolution_clock::now();
 
 // Function to calculate the elapsed time since the last frame
@@ -541,12 +543,12 @@ int main()
 			glm::vec3 signPosition = glm::vec3(-35.0f, -20.0f, 120.0f);
 			static float signMessageStartTime = 0.0f;
 
-			float proximityThreshold = 20.0f;
+			float signProximityThreshold = 20.0f;
 			float distanceToSign = glm::distance(camera.getCameraPosition(), signPosition);
 			std::cout << "Distance to sign: " << distanceToSign << std::endl;
-			bool displayMessage = distanceToSign < proximityThreshold;
-			if (displayMessage) {
-				static float signMessageStartTime = 0.0f;
+			bool displaySignMessage = distanceToSign < signProximityThreshold;
+
+			if (displaySignMessage) {
 				if (signMessageStartTime == 0.0f) {
 					signMessageStartTime = glfwGetTime();
 				}
@@ -568,7 +570,132 @@ int main()
 				signMessageStartTime = 0.0f;
 			}
 
+			// Message from dulap
+			glm::vec3 dulapPosition = glm::vec3(-14.0f, -18.0f, -70.0f);
+			float dulapProximityThreshold = 18.0f;
+			static float dulapMessageStartTime = 0.0f;
 
+			float distanceToDulap = glm::distance(camera.getCameraPosition(), dulapPosition);
+			std::cout << "Distance to dulap: " << distanceToDulap << std::endl;
+			bool displayDulapMessage = distanceToDulap < dulapProximityThreshold;
+
+			if (displayDulapMessage) {
+				if (dulapMessageStartTime == 0.0f) {
+					dulapMessageStartTime = glfwGetTime();
+				}
+				float elapsedTime = glfwGetTime() - dulapMessageStartTime;
+				float bounceHeight = 20.0f;
+				float bounceSpeed = 3.0f;
+				float offsetY = abs(sin(elapsedTime * bounceSpeed)) * bounceHeight;
+				ImVec2 windowSize = io.DisplaySize;
+				ImVec2 messagePos = ImVec2(windowSize.x / 2.0f, 100.0f + offsetY);
+				ImGui::SetNextWindowPos(messagePos, ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+				ImGui::Begin("Notification", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize);
+				ImGui::Text("You found the fuel! But you may need a key to open the cabinet...");
+				ImGui::End();
+				if (elapsedTime > 10.0f) {
+					dulapMessageStartTime = glfwGetTime();
+				}
+			}
+			else {
+				dulapMessageStartTime = 0.0f;
+			}
+
+			// Position of the key
+			glm::vec3 keyPosition = glm::vec3(18.0f, -10.0f, 30.0f);
+			float keyProximityThreshold = 20.0f;
+			static float keyMessageStartTime = 0.0f;
+
+			float distanceToKey = glm::distance(camera.getCameraPosition(), keyPosition);
+			std::cout << "Distance to key: " << distanceToKey << std::endl;
+			bool displayKeyMessage = distanceToKey < keyProximityThreshold;
+
+			if (displayKeyMessage) {
+				if (keyMessageStartTime == 0.0f) {
+					keyMessageStartTime = glfwGetTime();
+				}
+				float elapsedTime = glfwGetTime() - keyMessageStartTime;
+				float bounceHeight = 20.0f;
+				float bounceSpeed = 3.0f;
+				float offsetY = abs(sin(elapsedTime * bounceSpeed)) * bounceHeight;
+				ImVec2 windowSize = io.DisplaySize;
+				ImVec2 messagePos = ImVec2(windowSize.x / 2.0f, 100.0f + offsetY);
+				ImGui::SetNextWindowPos(messagePos, ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+				ImGui::Begin("Notification", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize);
+				ImGui::Text("You found it! Now go back, get the fuel and run!");
+				ImGui::End();
+				if (elapsedTime > 10.0f) {
+					keyMessageStartTime = glfwGetTime();
+				}
+			}
+			else {
+				keyMessageStartTime = 0.0f;
+			}
+
+			// Position of Bens
+			glm::vec3 bensPosition = glm::vec3(-14.0f, -11.0f, -68.0f);
+			float bensProximityThreshold = 3.0f;
+			static float bensMessageStartTime = 0.0f;
+
+			float distanceToBens = glm::distance(camera.getCameraPosition(), bensPosition);
+			std::cout << "Distance to bens: " << distanceToBens << std::endl;
+			bool displayBensMessage = distanceToBens < bensProximityThreshold;
+
+			if (displayBensMessage) {
+				if (bensMessageStartTime == 0.0f) {
+					bensMessageStartTime = glfwGetTime();
+				}
+				float elapsedTime = glfwGetTime() - bensMessageStartTime;
+				float bounceHeight = 20.0f;
+				float bounceSpeed = 3.0f;
+				float offsetY = abs(sin(elapsedTime * bounceSpeed)) * bounceHeight;
+				ImVec2 windowSize = io.DisplaySize;
+				ImVec2 messagePos = ImVec2(windowSize.x / 2.0f, 100.0f + offsetY);
+				ImGui::SetNextWindowPos(messagePos, ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+				ImGui::Begin("Notification", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize);
+				ImGui::Text("RUN! RUN! RUN!");
+				ImGui::End();
+				if (elapsedTime > 10.0f) {
+					bensMessageStartTime = glfwGetTime();
+				}
+			}
+			else {
+				bensMessageStartTime = 0.0f;
+			}
+
+
+			// Position of the boat
+			glm::vec3 boatPosition = glm::vec3(-15.0f, -20.0f, 125.0f);
+			float boatProximityThreshold = 5.0f;
+			static float boatMessageStartTime = 0.0f;
+
+			float distanceToBoat = glm::distance(camera.getCameraPosition(), boatPosition);
+			std::cout << "Distance to boat: " << distanceToBoat << std::endl;
+			bool displayBoatMessage = distanceToBoat < boatProximityThreshold;
+
+			if (displayBoatMessage) {
+				if (boatMessageStartTime == 0.0f) {
+					boatMessageStartTime = glfwGetTime();
+				}
+				float elapsedTime = glfwGetTime() - boatMessageStartTime;
+				float bounceHeight = 20.0f;
+				float bounceSpeed = 3.0f;
+				float offsetY = abs(sin(elapsedTime * bounceSpeed)) * bounceHeight;
+				ImVec2 windowSize = io.DisplaySize;
+				ImVec2 messagePos = ImVec2(windowSize.x / 2.0f, 100.0f + offsetY);
+				ImGui::SetNextWindowPos(messagePos, ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+				ImGui::Begin("Notification", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize);
+				ImGui::Text("You won!");
+				ImGui::End();
+				if (elapsedTime > 10.0f) {
+					boatMessageStartTime = glfwGetTime();
+				}
+			}
+			else {
+				boatMessageStartTime = 0.0f;
+			}
+
+			
 
 
 			sunShader.use();
@@ -765,24 +892,39 @@ int main()
 				glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
 			);
 
-			ModelMatrix *= rotationMatrix;
-			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
-			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-			arms.draw(shader);
+		ModelMatrix *= rotationMatrix;
+		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+		glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+		arms.draw(shader);
+		
+		//key
+		if (currentObjective >= FIND_KEY) {
+		if (!keyTouched) {
+			glm::vec3 keyPosition = glm::vec3(18.0f, -10.0f, 30.0f);
+			glm::vec3 distanceVector = cameraPos - keyPosition;
+			float distance = glm::length(distanceVector);
+			float distanceThreshold = 1.0f;
 
-			if (currentObjective >= FIND_KEY) {
-				ModelMatrix = glm::mat4(1.0);
+			if (distance < distanceThreshold) {
+				keyTouched = true;
+			}
 
-				ModelMatrix = glm::translate(ModelMatrix, glm::vec3(18.0f, -10.0f, 30.0f));
+			if (!keyTouched) {
+
+				ModelMatrix = glm::mat4(1.0f);
+				ModelMatrix = glm::translate(ModelMatrix, keyPosition);
 				ModelMatrix = glm::scale(ModelMatrix, glm::vec3(0.2f, 0.2f, 0.2f));
 				ModelMatrix = glm::rotate(ModelMatrix, 50.0f * (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
 				MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 				glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
 				glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-
 				key.draw(shader);
 			}
+		}
+		key.draw(shader);
+		}
+
 
 			//dulap
 			if (currentObjective >= FIND_CABINET) {
@@ -830,8 +972,8 @@ int main()
 				currentObjective = FIND_BOAT;
 			}
 
-			float distanceToBoat = calculateDistance(camera.getCameraPosition(), glm::vec3(-15.0f, -20.0f, 125.0f));
-			if (currentObjective == FIND_BOAT && distanceToBoat < 30.0f) {
+			float distanceToBoat2 = calculateDistance(camera.getCameraPosition(), glm::vec3(-15.0f, -20.0f, 125.0f));
+			if (currentObjective == FIND_BOAT && distanceToBoat2 < 30.0f) {
 				currentObjective = FIND_CABINET;
 			}
 
@@ -840,8 +982,8 @@ int main()
 				currentObjective = FIND_KEY;
 			}
 
-			float distanceToKey = calculateDistance(camera.getCameraPosition(), glm::vec3(18.0f, -10.0f, 30.0f));
-			if (currentObjective == FIND_KEY && distanceToKey < 10.0f) {
+			float distanceToKey2 = calculateDistance(camera.getCameraPosition(), glm::vec3(18.0f, -10.0f, 30.0f));
+			if (currentObjective == FIND_KEY && distanceToKey2 < 10.0f) {
 				currentObjective = FIND_FUEL;
 			}
 
@@ -905,7 +1047,6 @@ int main()
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 }
-
 
 void processKeyboardInput() {
 	static bool escPressed = false;
