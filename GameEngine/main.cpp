@@ -406,8 +406,7 @@ int main()
 	glm::vec3 signPosition = glm::vec3(-35.0f, -20.0f, 125.0f);
 
 
-	while (!window.isPressed(GLFW_KEY_ESCAPE) &&
-		glfwWindowShouldClose(window.getWindow()) == 0)
+	while (glfwWindowShouldClose(window.getWindow()) == 0)
 	{
 		window.clear();
 
